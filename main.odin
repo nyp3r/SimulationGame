@@ -1,6 +1,8 @@
 package main
 
 import rl "vendor:raylib"
+import "core:math/noise"
+import "core:fmt"
 
 
 Status :: enum {
@@ -40,9 +42,14 @@ Colony :: struct {
   stone: int,
 }
 
+
+TILE_SIZE :: 10
+WORLD_HEIGHT :: 450
+WORLD_WIDTH :: 800
 World :: struct {
   width: i32,
   height: i32,
+  terrain: [(WORLD_HEIGHT/TILE_SIZE) * (WORLD_WIDTH/TILE_SIZE)]f32,
 }
 
 DecisionCard :: struct {
@@ -94,8 +101,16 @@ main :: proc() {
   cardCount += 1
 
   world := World {
-    height = 450,
-    width = 800,
+    height = WORLD_HEIGHT,
+    width = WORLD_WIDTH,
+  }
+
+  for i := 0; i < len(world.terrain); i += 1 {
+    coords, err := IndexToCoordinatesNoise(i)
+    if err != "" {
+      fmt.println(err)
+    }
+    world.terrain[i] = noise.noise_2d(0, coords)
   }
   rl.InitWindow(world.width, world.height, "Raylib")
 
@@ -112,7 +127,6 @@ main :: proc() {
     rl.BeginDrawing()
 
     rl.ClearBackground(rl.WHITE)
-
 
     rl.DrawText("Ongoing: ", i32(cards[0].bounds.x), world.height/2 - 14, 14, rl.BLACK)
     for &card in cards {
@@ -137,17 +151,6 @@ main :: proc() {
   }
 
   rl.CloseWindow()
-}
-
-DirectionTo :: proc(from: rl.Vector2, to: rl.Vector2) -> rl.Vector2 {
-  return rl.Vector2Normalize(to - from)
-}
-DistanceTo :: proc(from: rl.Vector2, to: rl.Vector2) -> f32 {
-  return rl.Vector2Length(to - from);
-}
-
-RunnigSkillToMovementSpeed :: proc(running: int) -> f32 {
-  return f32((running + 10) * 5)
 }
 
 // TODO:
